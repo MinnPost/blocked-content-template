@@ -67,7 +67,7 @@ class Blocked_Content_Template {
 	* Choose template depending on whether a post has an access level, and if so, whether a user can access it.
 	* The important thing to know is that this adds type-blocked-postname, type-blocked-post, type-blocked
 	* to the beginning of the template hierarchy, and then attempts to locate them in the theme.
-	* If no blocked templates exist, it will use the default hierarchy.
+	* If no blocked templates exist, it will contine to check the default hierarchy for a matching file.
 	*
 	* @param string $template
 	* @param string $type
