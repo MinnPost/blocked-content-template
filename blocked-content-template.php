@@ -112,7 +112,7 @@ class Blocked_Content_Template {
 		}
 
 		$access_level = absint( get_post_meta( $post_id, $this->single_level_meta_key, true ) );
-		if ( '' === $access_level ) {
+		if ( 0 === $access_level ) {
 			return true;
 		}
 
