@@ -13,9 +13,13 @@ Text Domain: blocked-content-template
 
 class Blocked_Content_Template {
 
-	public $option_prefix;
-	public $version;
-	public $slug;
+	private $option_prefix;
+	private $version;
+	private $slug;
+
+	public $single_level_meta_key;
+	public $level_prefix;
+	public $member_levels;
 
 	/**
 	 * @var object
@@ -48,6 +52,8 @@ class Blocked_Content_Template {
 		$this->single_level_meta_key = '_access_level';
 		$this->level_prefix = 'member_';
 		$this->member_levels = array(
+			'registered' => 'registered users',
+			'members' => 'all members',
 			1 => 'bronze',
 			2 => 'silver',
 			3 => 'gold',
@@ -111,14 +117,29 @@ class Blocked_Content_Template {
 			$user_id = get_current_user_id();
 		}
 
-		$access_level = absint( get_post_meta( $post_id, $this->single_level_meta_key, true ) );
-		if ( 0 === $access_level ) {
+		$content_access_level = get_post_meta( $post_id, $this->single_level_meta_key, true );
+		if ( '' === $content_access_level ) {
 			return true;
 		}
 
 		// at this point, the default access answer should be false because the single item has a level meta value. user roles override it.
 		$can_access = false;
-		$content_member_level = $this->member_levels[ $access_level ];
+
+		// if the user id is not a user, they can't access any restricted content
+		if ( 0 === $user_id ) {
+			return false;
+		}
+
+		// if the content access level is only registered, let the user in because they are signed in
+		if ( 'registered' === $content_access_level ) {
+			return true;
+		}
+
+		if ( true === filter_var( $content_access_level, FILTER_VALIDATE_INT ) ) {
+			$content_access_level = absint( $content_access_level );
+		}
+
+		$content_member_level = $this->member_levels[ $content_access_level ];
 
 		$user_info = get_userdata( $user_id );
 
@@ -135,7 +156,12 @@ class Blocked_Content_Template {
 				),
 				$this->member_levels
 			) );
-			if ( $highest_user_role_num >= $access_level ) {
+			// the user is a member and this content is for all members. let them in.
+			if ( 'members' === $content_access_level && in_array( $highest_user_role_num, $this->member_levels ) ) {
+				$can_access = true;
+			}
+			// the user's member level matches the content member level
+			if ( $highest_user_role_num >= $content_access_level ) {
 				$can_access = true;
 			}
 		}
