@@ -118,7 +118,7 @@ class Blocked_Content_Template {
 		}
 
 		$content_access_level = get_post_meta( $post_id, $this->single_level_meta_key, true );
-		if ( '' === $content_access_level || empty( $content_access_level ) ) {
+		if ( '' === $content_access_level ) {
 			return true;
 		}
 
@@ -130,42 +130,23 @@ class Blocked_Content_Template {
 			return false;
 		}
 
-		if ( ! is_array( $content_access_level ) ) {
-
-			// if the content access level is only registered, let the user in because they are signed in
-			if ( 'registered' === $content_access_level ) {
-				return true;
-			}
-
-			if ( true === filter_var( $content_access_level, FILTER_VALIDATE_INT ) ) {
-				$content_access_level = absint( $content_access_level );
-			}
-			$content_member_level = $this->member_levels[ $content_access_level ];
-		} else {
-			$content_access_levels = array();
-			$content_member_levels = array();
-			foreach ( $content_access_level as $content_access_level ) {
-
-				// if the content access level is only registered, let the user in because they are signed in
-				if ( 'registered' === $content_access_level ) {
-					return true;
-				}
-
-				if ( true === filter_var( $content_access_level, FILTER_VALIDATE_INT ) ) {
-					$content_access_levels[] = absint( $content_access_level );
-				} else {
-					$content_access_levels[] = $content_access_level;
-				}
-
-				$content_member_levels[] = $this->member_levels[ $content_access_level ];
-			}
+		// if the content access level is only registered, let the user in because they are signed in
+		if ( 'registered' === $content_access_level ) {
+			return true;
 		}
+
+		if ( true === filter_var( $content_access_level, FILTER_VALIDATE_INT ) ) {
+			$content_access_level = absint( $content_access_level );
+		}
+
+		$content_member_level = $this->member_levels[ $content_access_level ];
 
 		$user_info = get_userdata( $user_id );
 
 		$user_roles = array_filter( $user_info->roles, function ( $key ) {
 			return strpos( $key, $this->level_prefix ) === 0;
 		} );
+		error_log( 'user is ' . print_r( $user_info, true ) );
 
 		if ( is_array( $user_roles ) && ! empty( $user_roles ) ) {
 			$highest_user_role = $user_roles[ max( array_keys( $user_roles ) ) ];
@@ -176,27 +157,13 @@ class Blocked_Content_Template {
 				),
 				$this->member_levels
 			) );
-
-			// there is only one level for the content
-			if ( ! isset( $content_access_levels ) ) {
-				// the user is a member and this content is for all members. let them in.
-				if ( 'members' === $content_access_level && in_array( $highest_user_role_num, $this->member_levels ) ) {
-					$can_access = true;
-				}
-				// the user's member level matches or exceeds the content member level
-				if ( $highest_user_role_num >= $content_access_level ) {
-					$can_access = true;
-				}
-			} else {
-				// there is an array of levels
-				// the user is a member and this content is for all members. let them in.
-				if ( in_array( 'members', $content_access_levels ) && in_array( $highest_user_role_num, $this->member_levels ) ) {
-					$can_access = true;
-				}
-				// the user's member level matches or exceeds the content member level
-				if ( $highest_user_role_num >= max( array_keys( $content_access_levels ) ) ) {
-					$can_access = true;
-				}
+			// the user is a member and this content is for all members. let them in.
+			if ( 'members' === $content_access_level && in_array( $highest_user_role_num, $this->member_levels ) ) {
+				$can_access = true;
+			}
+			// the user's member level matches the content member level
+			if ( $highest_user_role_num >= $content_access_level ) {
+				$can_access = true;
 			}
 		}
 		return $can_access;
