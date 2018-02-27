@@ -61,6 +61,9 @@ class Blocked_Content_Template {
 		);
 		$this->blocked_template_suffix = '-paywalled';
 
+		$can_see_blocked_content = array( 'administrator', 'editor', 'business' );
+		$this->can_see_blocked_content = apply_filters( 'blocked_content_template', $can_see_blocked_content );
+
 		$this->add_actions();
 	}
 
@@ -142,11 +145,10 @@ class Blocked_Content_Template {
 		$content_member_level = $this->member_levels[ $content_access_level ];
 
 		$user_info = get_userdata( $user_id );
-
+		$all_user_roles = $user_info->roles;
 		$user_roles = array_filter( $user_info->roles, function ( $key ) {
 			return strpos( $key, $this->level_prefix ) === 0;
 		} );
-		error_log( 'user is ' . print_r( $user_info, true ) );
 
 		if ( is_array( $user_roles ) && ! empty( $user_roles ) ) {
 			$highest_user_role = $user_roles[ max( array_keys( $user_roles ) ) ];
@@ -166,6 +168,13 @@ class Blocked_Content_Template {
 				$can_access = true;
 			}
 		}
+
+		// if user has a role that allows them to see everything, let them see everything
+		$can_user_see_everything = array_intersect( $this->can_see_blocked_content, $all_user_roles );
+		if ( is_array( $can_user_see_everything ) && ! empty( $can_user_see_everything ) ) {
+			$can_access = true;
+		}
+
 		return $can_access;
 	}
 
