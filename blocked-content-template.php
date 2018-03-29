@@ -20,6 +20,7 @@ class Blocked_Content_Template {
 	public $single_level_meta_key;
 	public $level_prefix;
 	public $member_levels;
+	public $minimum_branded_level;
 
 	/**
 	 * @var object
@@ -49,9 +50,9 @@ class Blocked_Content_Template {
 		// admin settings
 		//$this->admin = $this->load_admin();
 
-		$this->single_level_meta_key   = '_access_level';
-		$this->level_prefix            = 'member_';
-		$this->member_levels           = array(
+		$this->single_level_meta_key = '_access_level';
+		$this->level_prefix          = 'member_';
+		$this->member_levels         = array(
 			'registered' => 'registered users',
 			'members'    => 'all members',
 			1            => 'bronze',
@@ -59,6 +60,9 @@ class Blocked_Content_Template {
 			3            => 'gold',
 			4            => 'platinum',
 		);
+
+		$this->minimum_branded_level = $this->get_minimum_branded_level();
+
 		$this->blocked_template_suffix = '-paywalled';
 
 		$can_see_blocked_content       = array( 'administrator', 'editor', 'business' );
@@ -67,9 +71,24 @@ class Blocked_Content_Template {
 		$this->add_actions();
 	}
 
+	/**
+	* Things to run when plugin loads
+	*
+	*/
 	private function add_actions() {
 		// this could be used for any other template as well, but we are sticking with single.
 		add_filter( 'single_template', array( $this, 'template_show_or_block' ), 10, 3 );
+	}
+
+	/**
+	* Set and return the mininum branded level for content. This is when the content should look different because of its access level.
+	*
+	* @return int $minimum_branded_level
+	*/
+	public function get_minimum_branded_level() {
+		$minimum_branded_level = 2;
+		$minimum_branded_level = apply_filters( 'blocked_content_minimum_branded_level', $minimum_branded_level );
+		return $minimum_branded_level;
 	}
 
 	/**
