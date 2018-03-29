@@ -44,24 +44,24 @@ class Blocked_Content_Template {
 
 	public function __construct() {
 		$this->version = '0.0.1';
-		$this->slug = 'blocked-content-template';
+		$this->slug    = 'blocked-content-template';
 
 		// admin settings
 		//$this->admin = $this->load_admin();
 
-		$this->single_level_meta_key = '_access_level';
-		$this->level_prefix = 'member_';
-		$this->member_levels = array(
+		$this->single_level_meta_key   = '_access_level';
+		$this->level_prefix            = 'member_';
+		$this->member_levels           = array(
 			'registered' => 'registered users',
-			'members' => 'all members',
-			1 => 'bronze',
-			2 => 'silver',
-			3 => 'gold',
-			4 => 'platinum',
+			'members'    => 'all members',
+			1            => 'bronze',
+			2            => 'silver',
+			3            => 'gold',
+			4            => 'platinum',
 		);
 		$this->blocked_template_suffix = '-paywalled';
 
-		$can_see_blocked_content = array( 'administrator', 'editor', 'business' );
+		$can_see_blocked_content       = array( 'administrator', 'editor', 'business' );
 		$this->can_see_blocked_content = apply_filters( 'blocked_content_template', $can_see_blocked_content );
 
 		$this->add_actions();
@@ -86,7 +86,7 @@ class Blocked_Content_Template {
 	*/
 	public function template_show_or_block( $template, $type, $templates ) {
 		global $post;
-		$user_id = get_current_user_id();
+		$user_id    = get_current_user_id();
 		$can_access = $this->user_can_access( $post->ID, $user_id );
 		if ( true === $can_access ) {
 			return $template;
@@ -96,7 +96,7 @@ class Blocked_Content_Template {
 				$blocked_templates[] = substr_replace( $default_template, $type . $this->blocked_template_suffix, 0, strlen( $type ) );
 			}
 			$blocked_templates = array_merge( $blocked_templates, $templates );
-			$template = locate_template( $blocked_templates );
+			$template          = locate_template( $blocked_templates );
 			return $template;
 		}
 	}
@@ -144,14 +144,14 @@ class Blocked_Content_Template {
 
 		$content_member_level = $this->member_levels[ $content_access_level ];
 
-		$user_info = get_userdata( $user_id );
+		$user_info      = get_userdata( $user_id );
 		$all_user_roles = $user_info->roles;
-		$user_roles = array_filter( $user_info->roles, function ( $key ) {
+		$user_roles     = array_filter( $user_info->roles, function ( $key ) {
 			return strpos( $key, $this->level_prefix ) === 0;
 		} );
 
 		if ( is_array( $user_roles ) && ! empty( $user_roles ) ) {
-			$highest_user_role = $user_roles[ max( array_keys( $user_roles ) ) ];
+			$highest_user_role     = $user_roles[ max( array_keys( $user_roles ) ) ];
 			$highest_user_role_num = absint( array_search(
 				substr(
 					$highest_user_role,
@@ -201,7 +201,7 @@ class Blocked_Content_Template {
 	*/
 	public function plugin_action_links( $links, $file ) {
 		if ( plugin_basename( __FILE__ ) === $file ) {
-			$settings = '<a href="' . get_admin_url() . 'options-general.php?page=' . $this->slug . '">' . __( 'Settings', $this->slug ) . '</a>';
+			$settings = '<a href="' . get_admin_url() . 'options-general.php?page=' . $this->slug . '">' . __( 'Settings', 'blocked-content-template' ) . '</a>';
 			array_unshift( $links, $settings );
 		}
 		return $links;
